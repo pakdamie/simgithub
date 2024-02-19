@@ -1,0 +1,273 @@
+---
+title: "Linear regression: learning by simulation"
+author: Damie Pak
+prettydoc::html_pretty:
+output:
+  tufte::tufte_html: default
+
+---
+
+# Simulate, simulate, simulate
+
+```{r include=FALSE}
+library(ggplot2)
+library(viridis)
+library(patchwork)
+library(tufte)
+library(gganimate)
+```
+
+`r newthought ("Running a linear regression is relatively easy.")` Everyone (and I mean *everyone*) has all happily typed "lm()" into R. However, while running regression on a dataset is easy... Truly understanding the nuances is quite hard for me! I can easily parrot the things I read, but there's an deep anxiety that I truly do not understand it! How do you know you're right when doing statistical analyses? One can scoff that it's impossible to know if you're right. Fair, I would respond, but I think teaching statistics in a way where you know the right answer (because you made it up), can give one a much deeper understanding.
+
+My partner telling me to simulate data and run a statistical analysis was kinda like a religious epiphany for me. There was also a paper I was reading that describes the true model as known to no one but God ^[Using Simulation to Study Linear Regression by LeRoy A. Franklin]. And I think that clicked! Let us say we are an omnipotent being who know exactly the mechanism of the universe. As man, however, we must resort to estimate what was wrought with divine hands.
+
+# Linear regression
+
+The simple ^[Yet very powerful] linear regression can be described as: 
+$$
+Y_i = \beta_0 + \beta_1 X_i + \epsilon,
+$$
+where $Y_i$ are the outcomes and $X_i$ are the observations, $\beta_0$ is the intercept, $\beta_1$ is the slope that describes the relationship between $Y$ and $X$. $\epsilon$ is the error term to describe how the observed values deviate from the true value. Remember, we are trying to estimate what $\beta_0$ and $\beta_1$ as well as $\epsilon$!
+Here, we're not dealing with actual real-life data! Let us instead, simulate our own data where we know exactly what $\beta_0$ and $\beta_1$ are:
+
+$$
+y_i = 3 + 2x_i + \epsilon .
+$$
+
+Specifically, we set $\beta_0 = 3$ and $\beta_1$ = 2. For the error term ($\epsilon$), an important assumption is that it is normally distributed with mean 0 and standard deviation $\sigma^2$^[$\sigma$ is the standard deviation and $\sigma^2$ is the variance. Remember, the standard deviation is the square root of the variance!]. Mathematically, we can denote this as $\epsilon \sim {N(0,\sigma^2)}$.
+
+Ok! But what does that mean? Here, let's write a simple code to generate some normal distributions with mean 0 and different variances.
+
+```{r}
+x_interest = seq(-6,6, length = 1000)
+mean_interest = 0 #the mean is 0
+sigma_normal = c(0.5,1,2) #the standard deviations that we're interested in$
+```
+
+```{r include=FALSE}
+normal_distribution_error <- NULL
+
+for (sigma_no in seq(1,3)){ #looping over the different sigmas
+       sigma_i <- sigma_normal[sigma_no] #sigma interest
+       
+       probability_distribution <-  
+               data.frame(prob = dnorm(x_interest,    #input
+                                       mean_interest, #mean
+                                       sigma_i))    #sigma of interest
+       probability_distribution$x <- x_interest
+       probability_distribution$id <- sigma_i
+       normal_distribution_error[[sigma_no]] <- probability_distribution
+}
+normal_distribution_error <- do.call(rbind, normal_distribution_error) 
+```
+
+```{r echo=FALSE, fig.cap= "Normal distributions with mean 0 and different standard deviations. As you increase the variance, the wider the distribution is", fig.margin=TRUE}
+ggplot(normal_distribution_error , 
+       aes(x = x, 
+           y = prob,
+           color = as.factor(id),
+           group = as.factor(id)))+
+        geom_line(linewidth= 1)+
+        geom_vline(xintercept = 0)+
+        scale_color_viridis(option = 'viridis', 
+                    discrete = 'TRUE',
+                    name = 'Variance') +
+        xlab("x")+ 
+        ylab("Probability")+
+        theme_classic()+
+        theme( 
+        panel.background = element_rect(fill = "#fffff8"),
+        plot.background = element_rect(fill = "#fffff8"),
+        legend.background = element_rect(fill = "#fffff8"),
+        axis.text = element_text(size = 12, color = 'black'),
+        axis.title = element_text(size = 14, color = 'black'))
+```
+
+The normal distributions are centered on the same mean but the variance is quite different! With a smaller variance, the distribution is narrower. If we sample from this distribution, the numbers picked would all be relatively close to 0! However, if we have a higher variance, then the numbers can deviate further from 0.
+
+In our God's eye view, we can add an error term to our equation and set the variance of the error term (Remember, we only know the error term because we're simulating it! We have to estimate it in other times!):
+
+$$
+y_i = 3 + 2x_i + \epsilon
+$$
+
+One way to think about that it is that we have basically the deterministic part $3 + 2 x_i$ and now we're adding noise that is desceribed with a normal distribution.
+
+So for example, let's say the input I'm interested is from 1 to 10. The output would then be $3 + 2(1) = 5$, $3 + 2(2) = 7$, $3 + 2(3) = 9$, and so on! For each observation, we sample from the normal distribution and add it to the y-output. Aha, one assumption of linear regression is that the variance of the residuals have to be the same. From the simulation, the noise we are adding is from the same normal distribution with the same mean and variance. If the variance are different for each observation (for exampl, what if for an input of 3, the error term is picked from a normal distribution with mean 0 and a standard deviation of 2), than our model is unable to accurately predict what we observed.
+
+So I can sample from the normal distribution by using the R function rnorm. With rnorm I am telling R: "Hey, with a normal distribution of mean 0 and a standard deviation of 1... Can you give me ten random values please[^1]!"
+
+[^1]: "Be nice to machines to survive the AI uprising! I heard a lot of people say please and thank you to Chatgpt"
+
+```{r}
+set.seed(24601)
+rnorm_generated <- data.frame(num = rnorm(10, mean = 0, sd = 1),
+                             frame = seq(1,10)) #frame is just a way to identify
+print(rnorm_generated)
+
+```
+
+Let's visually see what is happening!
+
+```{r include=FALSE}
+#I'm only interested in gettting the normal distribution with a variance of 1
+normal_distribution_error_1 <- subset(normal_distribution_error, subset = normal_distribution_error$id ==1)
+```
+
+```{r echo=FALSE}
+normal_distribution_error_GG <- 
+ggplot(normal_distribution_error_1  , 
+       aes(x = x, 
+           y = prob))+
+geom_line(linewidth = 1)+
+geom_vline(data = rnorm_generated, 
+           aes(xintercept = num, 
+               color = as.factor(frame)),
+            linewidth= 1.2, alpha = 1)+
+scale_color_viridis(option = 'turbo', discrete = TRUE)+
+xlab("x")+ 
+ylab("Probability")+theme_classic()+
+theme(  panel.background = element_rect(fill = "#fffff8"),
+        plot.background = element_rect(fill = "#fffff8"),
+        legend.background = element_rect(fill = "#fffff8"),
+        axis.text = element_text(size = 12, color = 'black'),
+      axis.title = element_text(size = 14, color = 'black'),
+      strip.text = element_text(size = 15),
+      strip.background = element_blank(),
+      legend.position = 'none')
+
+```
+
+```{r  fig.margin=TRUE}
+normal_distribution_error_GG + transition_states(frame)
+```
+
+What does this say? So for x = 1, I'm going to add the value that I sampled from the normal distribution. Let's show how this looks like!
+
+```{r include=FALSE}
+Intercept <-  3
+Slope <- 2 
+x_input <- seq(1,10)
+y_output <- Intercept + Slope * (x_input)
+y_output_error = y_output + rnorm_generated[,1]
+frame_1 = seq(1,10,1)
+
+regression_df <- data.frame(frames = 
+                            frame_1 ,
+                            x_input, #x_input
+                            y_output, #y
+                            y_output_error #y with the error
+)
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+regression_full_GG <- ggplot(regression_df,
+       aes(x_input, y_output)) +
+        geom_segment(
+        aes(x = x_input, xend = x_input,
+        y = y_output, yend = y_output_error, color= as.factor(frames)), linewidth = 1)+
+           geom_point(size = 4, alpha = 0.5)+
+        geom_line(alpha = 0.2)+
+        geom_point(aes(x_input, y_output_error, fill= as.factor(frames)),
+                   color = 'black',
+                   size = 4, shape = 21)+
+        xlab("X") +
+        ylab("Y")+
+        scale_fill_viridis(option = 'turbo', discrete = TRUE)+
+        scale_color_viridis(option = 'turbo', discrete = TRUE)+
+        theme_classic() + 
+        theme(panel.background = element_rect(fill = "#fffff8"),
+        plot.background = element_rect(fill = "#fffff8"),
+        legend.background = element_rect(fill = "#fffff8"),
+                axis.text = element_text(size = 14),
+              axis.title = element_text(size = 15), 
+              legend.position = 'none')
+
+```
+
+```{r echo=FALSE, fig.margin=TRUE, warning=TRUE}
+normal_distribution_error_GG + facet_wrap(~frame)
+```
+
+```{r echo=FALSE,  fig.cap= "The noise is sampled from the same normal distribution!"}
+regression_full_GG
+```
+
+So the grey line and points represent the deterministic part ($3+ 2x$) and the colored points represent the output the error term is added! Aha, we have simulated data with the underlying process: $3 + 2x + \epsilon$.
+
+# Mere man
+
+Without our omniscient powers, we would only see the colored points! We simulated the underlying dynamics, so we know the truth, but in the world of man, we now have to figure out what $B_0$ and $B_1$ are!
+
+```{r echo=FALSE}
+ggplot(regression_df, aes(x = x_input, 
+                          y = y_output_error)) +
+        geom_point(size =4)+
+        theme_classic() + 
+        theme(panel.background = element_rect(fill = "#fffff8"),
+              plot.background = element_rect(fill = "#fffff8"),
+              legend.background = element_rect(fill = "#fffff8"),
+              axis.text = element_text(size = 14),
+              axis.title = element_text(size = 15), 
+              legend.position = 'none')
+```
+
+# Sum of least squares
+
+The typical method for solving linear regressions is by fitting a line that minimizes the vertical distances between the line and the observations. We do this by using the sum of least squares! It's simple data-fitting and all we have to do is some calculations.
+
+Here, I created a function to help with that!
+
+You can skip it if you just want the answers, but a good coding exercise would be to code this yourself.
+
+```{r}
+calculate_least_squares <- function(data.frame){
+        N = length(data.frame$x_input)
+        sum_func.xy = sum(data.frame$x_input * data.frame$y_output_error)
+        sum_func_x_y = sum(data.frame$x_input) *         sum(data.frame$y_output_error)
+        sum_func.x2 = sum(data.frame$x_input^2)
+        sum_fun.x_2 = sum(data.frame$x_input)^2
+        
+        sum_y = sum(data.frame$y_output_error) 
+
+        Slope = round(((N * sum_func.xy) - sum_func_x_y)/
+                     ((N*sum_func.x2)  - sum_fun.x_2 ),2)
+        
+        slope_sum_x <-  Slope * sum(data.frame$x_input)
+
+        Intercept = round((sum_y - slope_sum_x)/N,2)
+
+       return(c(paste("B0",Intercept, sep = "="),
+                paste("B1", Slope,sep = "=")))
+}
+
+```
+
+Let's try it out:
+
+```{r}
+calculate_least_squares(regression_df)
+```
+
+I got the intercept of 3.57 and the slope is 1.78! Similar to our simulated $B_0$ and $B_1$. Let's also calculate the standard error of the residuals:
+
+$$ \frac{\sum (y - \hat{y})^2}{n -2}$$
+
+```{r}
+pop_se <- sqrt(sum(((3.57 + 1.78 *seq(1,10))-regression_df[,"y_output_error"]) ^2)/(10 -2))
+
+print(pop_se)
+```
+
+We see that the variance of the error term is 1.023
+
+# Verifying with the lm function
+
+Moment of truth, does our findings match with the R function?
+
+```{r}
+summary(lm(y_output_error ~ x_input, data= regression_df))
+```
+
+Aha, the results are similar to what we got when we see that's what we found when we calculated $B_0$ (estimate of the intercept), $B_1$ (estimate of the x_input), and $\sigma^2$ (look at the residual standard error)! 
