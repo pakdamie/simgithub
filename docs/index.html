@@ -95,8 +95,8 @@ if (window.hljs) {
 
 <div id="simulate-simulate-simulate" class="section level1">
 <h1>Simulate, simulate, simulate</h1>
-<p><span class="newthought">Running a linear regression is relatively easy.</span> Everyone (and I mean <em>everyone</em>) has all happily typed “lm()” into R. However, while running regression on a dataset is easy… Truly understanding the nuances is quite hard for me! I can easily parrot the things I read, but there’s an deep anxiety that I truly do not understand it! How do you know you’re right when doing statistical analyses? One can scoff that it’s impossible to know if you’re right. Fair, I would respond, but I think teaching statistics in a way where you know the right answer (because you made it up), can give one a much deeper understanding.</p>
-<p>My partner telling me to simulate data and run a statistical analysis was kinda like a religious epiphany for me. There was also a paper I was reading that describes the true model as known to no one but God <label for="tufte-sn-1" class="margin-toggle sidenote-number">1</label><input type="checkbox" id="tufte-sn-1" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">1</span> Using Simulation to Study Linear Regression by LeRoy A. Franklin</span>. And I think that clicked! Let us say we are an omnipotent being who know exactly the mechanism of the universe. As man, however, we must resort to estimate what was wrought with divine hands.</p>
+<p><span class="newthought">Running a linear regression is relatively easy.</span> Everyone (and I mean <em>everyone</em>) has all happily typed “lm()” into R. However, while running regression on a data set is easy… Truly understanding the nuances is quite hard for me! I can easily parrot the things I read, but I have some anxiety that I truly do not understand the intricacies! How do you know you’re right when doing statistical analyses? One can scoff that it’s impossible to know if you’re right. Fair, I would respond, but I think teaching statistics in a way where you know the right answer (because you made it up) can give one a much deeper understanding.</p>
+<p>After hearing my fear, my partner told me to go forth, simulate data, and run a statistical analysis! It was a bit of a religious epiphany for me. With the help of a great paper, it has a little blurb that states that true models are known to no one but God <label for="tufte-sn-1" class="margin-toggle sidenote-number">1</label><input type="checkbox" id="tufte-sn-1" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">1</span> Using Simulation to Study Linear Regression by LeRoy A. Franklin</span>. I think that clicked! Let us say we are an omnipotent being who know exactly the mechanism of the universe. As man, however, we must resort to estimate what was wrought with divine hands.</p>
 </div>
 <div id="linear-regression" class="section level1">
 <h1>Linear regression</h1>
@@ -104,13 +104,13 @@ if (window.hljs) {
 <span class="math display">\[
 Y_i = \beta_0 + \beta_1 X_i + \epsilon,
 \]</span>
-where <span class="math inline">\(Y_i\)</span> are the outcomes and <span class="math inline">\(X_i\)</span> are the observations, <span class="math inline">\(\beta_0\)</span> is the intercept, <span class="math inline">\(\beta_1\)</span> is the slope that describes the relationship between <span class="math inline">\(Y\)</span> and <span class="math inline">\(X\)</span>. <span class="math inline">\(\epsilon\)</span> is the error term to describe how the observed values deviate from the true value. Remember, we are trying to estimate what <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span> as well as <span class="math inline">\(\epsilon\)</span>!
-Here, we’re not dealing with actual real-life data! Let us instead, simulate our own data where we know exactly what <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span> are:</p>
+where <span class="math inline">\(Y_i\)</span> are the outcomes and <span class="math inline">\(X_i\)</span> are the observations, <span class="math inline">\(\beta_0\)</span> is the intercept, <span class="math inline">\(\beta_1\)</span> is the slope that describes the relationship between <span class="math inline">\(Y\)</span> and <span class="math inline">\(X\)</span>. <span class="math inline">\(\epsilon\)</span> is the error term describinh how the observed values deviate from the true values. Remember, we are trying to estimate what <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>, as well as <span class="math inline">\(\epsilon\)</span>, are.
+Here, we’re not dealing with actual real-life data! Let us instead, simulate our own data and so we know exactly what <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span> are:</p>
 <p><span class="math display">\[
 y_i = 3 + 2x_i + \epsilon .
 \]</span></p>
 <p>Specifically, we set <span class="math inline">\(\beta_0 = 3\)</span> and <span class="math inline">\(\beta_1\)</span> = 2. For the error term (<span class="math inline">\(\epsilon\)</span>), an important assumption is that it is normally distributed with mean 0 and standard deviation <span class="math inline">\(\sigma^2\)</span><label for="tufte-sn-3" class="margin-toggle sidenote-number">3</label><input type="checkbox" id="tufte-sn-3" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">3</span> <span class="math inline">\(\sigma\)</span> is the standard deviation and <span class="math inline">\(\sigma^2\)</span> is the variance. Remember, the standard deviation is the square root of the variance!</span>. Mathematically, we can denote this as <span class="math inline">\(\epsilon \sim {N(0,\sigma^2)}\)</span>.</p>
-<p>Ok! But what does that mean? Here, let’s write a simple code to generate some normal distributions with mean 0 and different variances.</p>
+<p>Ok! But what does that mean? Let’s write a simple code to generate some normal distributions with mean 0 and different variances.</p>
 <pre class="r"><code>x_interest = seq(-6,6, length = 1000)
 mean_interest = 0 #the mean is 0
 sigma_normal = c(0.5,1,2) #the standard deviations that we&#39;re interested in$</code></pre>
@@ -128,9 +128,9 @@ sigma_normal = c(0.5,1,2) #the standard deviations that we&#39;re interested in$
 <p><span class="math display">\[
 y_i = 3 + 2x_i + \epsilon
 \]</span></p>
-<p>One way to think about that it is that we have basically the deterministic part <span class="math inline">\(3 + 2 x_i\)</span> and now we’re adding noise that is desceribed with a normal distribution.</p>
-<p>So for example, let’s say the input I’m interested is from 1 to 10. The output would then be <span class="math inline">\(3 + 2(1) = 5\)</span>, <span class="math inline">\(3 + 2(2) = 7\)</span>, <span class="math inline">\(3 + 2(3) = 9\)</span>, and so on! For each observation, we sample from the normal distribution and add it to the y-output. Aha, one assumption of linear regression is that the variance of the residuals have to be the same. From the simulation, the noise we are adding is from the same normal distribution with the same mean and variance. If the variance are different for each observation (for exampl, what if for an input of 3, the error term is picked from a normal distribution with mean 0 and a standard deviation of 2), than our model is unable to accurately predict what we observed.</p>
-<p>So I can sample from the normal distribution by using the R function rnorm. With rnorm I am telling R: “Hey, with a normal distribution of mean 0 and a standard deviation of 1… Can you give me ten random values please<label for="tufte-sn-4" class="margin-toggle sidenote-number">4</label><input type="checkbox" id="tufte-sn-4" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">4</span> “Be nice to machines to survive the AI uprising! I heard a lot of people say please and thank you to Chatgpt”</span>!”</p>
+<p>One way to think about that it is that we have basically the deterministic part <span class="math inline">\(3 + 2 x_i\)</span> and now we’re adding noise that is described with a normal distribution.</p>
+<p>So for example, let’s say the input I’m interested is from 1 to 10. The output would then be <span class="math inline">\(3 + 2(1) = 5\)</span>, <span class="math inline">\(3 + 2(2) = 7\)</span>, <span class="math inline">\(3 + 2(3) = 9\)</span>, and so on! For each observation, we sample from the normal distribution and add it to the y-output. Aha! One assumption of linear regression is that the variance of the residuals have to be the same. From the simulation, the noise we are adding is from the same normal distribution. If the variance are different for each observation (for example, what if for an input of 3, the error term is described from a normal distribution with mean 0 and a standard deviation of 2), than our model is unable to accurately predict what we observed.</p>
+<p>I can sample from the normal distribution by using the R function rnorm. With rnorm I am telling R: “Hey, with a normal distribution of mean 0 and a standard deviation of 1… Can you give me ten random values please<label for="tufte-sn-4" class="margin-toggle sidenote-number">4</label><input type="checkbox" id="tufte-sn-4" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">4</span> “Be nice to machines to survive the AI uprising! I heard a lot of people say please and thank you to Chatgpt”</span>!”</p>
 <pre class="r"><code>set.seed(24601)
 rnorm_generated &lt;- data.frame(num = rnorm(10, mean = 0, sd = 1),
                              frame = seq(1,10)) #frame is just a way to identify
@@ -156,8 +156,7 @@ print(rnorm_generated)</code></pre>
 <p class="caption marginnote">--> <!--</p>-->
 <!--</div>--></span>
 </p>
-<pre class="r"><code>normal_distribution_error_GG + transition_states(frame)</code></pre>
-<p>What does this say? So for x = 1, I’m going to add the value that I sampled from the normal distribution. Let’s show how this looks like!</p>
+<p>What does this say? So for <span class="math inline">\(x = 1\)</span>, I’m going to add the value that I sampled from the normal distribution. Let’s show how this looks like!</p>
 <p>
 <span class="marginnote shownote">
 <!--
@@ -237,7 +236,7 @@ print(pop_se)</code></pre>
 ## Residual standard error: 1.023 on 8 degrees of freedom
 ## Multiple R-squared:  0.9688, Adjusted R-squared:  0.9649 
 ## F-statistic: 248.7 on 1 and 8 DF,  p-value: 2.613e-07</code></pre>
-<p>Aha, the results are similar to what we got when we see that’s what we found when we calculated <span class="math inline">\(B_0\)</span> (estimate of the intercept), <span class="math inline">\(B_1\)</span> (estimate of the x_input), and <span class="math inline">\(\sigma^2\)</span> (look at the residual standard error)!</p>
+<p>Aha, the results are similar to what we got when we see that’s what we found when we estimate <span class="math inline">\(B_0\)</span> (estimate of the intercept), <span class="math inline">\(B_1\)</span> (estimate of the x_input), and <span class="math inline">\(\sigma^2\)</span> (the residual standard error)!</p>
 </div>
 
 
